@@ -1,0 +1,25 @@
+{
+  "name": "expressjs",
+  "version": "1.0.0",
+  "description": "Clase de express",
+  "keywords": [],
+  "license": "ISC",
+  "author": "Nicolás Zurita",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch app.js",
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "prisma skills sync || exit 0"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.10.0",
+    "body-parser": "^2.3.0",
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "prisma": "^8.0.0-rc.22"
+  }
+}
