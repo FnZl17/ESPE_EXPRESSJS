@@ -144,9 +144,11 @@ dist
 
 #carpetas prisma
 .agents/
-.claude
-.cursor
-.devin
-.prisma.config.ts
+.claude/
+.windsurf/
+.prisma/
+.prisma6.config.ts
+. generated
 
 # End of https://www.toptal.com/developers/gitignore/api/node
+/generated/prisma

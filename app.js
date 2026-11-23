@@ -8,12 +8,23 @@ const usersFilePath = path.join(__dirname, 'users.json'); // Ruta al archivo JSO
 
 //Estructura basica, crear express, definir puerto y escuchar peticiones
 const express = require('express');
+const { Pool } = require('pg');
+const { PrismaClient } = require('@prisma/client');
+const { PrismaPg } = require('@prisma/adapter-pg');
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({adapter});
+const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken');
 
-const {isValidUser} = require("./utils/validation");
-const errorHandler = require('./middlewares/errorHandler');
-const loggerMiddleware = require('./middlewares/logger');
+const loggerMiddleware = require('./middlewares/logger.js');
+const errorHandler = require('./middlewares/errorHandler.js');
+const {isValidUser} = require('./utils/validation.js');
+const authenticateToken= require('./middlewares/auth.js');
+const { error } = require('console');
 
 const app = express();
+
 app.use(bodyParser.json()); // Configurar body-parser para parsear JSON
 app.use(bodyParser.urlencoded({ extended: true })); // Configurar body-parser para parsear datos de formularios
 //pasar a binario para que se puedan recibir archivos, imagenes, videos, etc
@@ -159,6 +170,55 @@ app.delete("/users/:id", (req, res) => {
 
 app.get ("/error", (req, res, next) => {
   next(new Error("Error intencional"));
+});
+
+
+
+app.get('/db_users', async(req,res)=>{
+  try{
+    const users = await prisma.user.findMany({
+      select: { id: true, name: true, email: true, role: true }
+    }); // Obtener los usuarios sin exponer sus contraseñas
+    res.json(users); // Responder con la lista de usuarios en formato JSON
+  } catch(error) {
+    next(error);
+  }
+});
+
+app.use(errorHandler);
+
+
+
+app.post('/register', async(req, res, next)=>{
+  try {
+    const {email, password, name} = req.body;
+    const hashedPassword = await bcrypt.hash(password,10);
+    await prisma.user.create({
+      data:{
+        email,
+        password: hashedPassword,
+        name,
+        role: "USER"
+      },
+    });
+    res.status(201).json({message: "User registered successfully"});
+  } catch(error) {
+    next(error);
+  }
+});
+
+app.post('/login', async(req, res, next)=>{
+  const {email, password} = req.body;
+  const user = await prisma.user.findUnique({where: {email}});
+  if(!user)
+    return res.status(400). json({error: "Invalid email or password"})
+  const validPassword = await bcrypt.compare(password, user.password);
+    if(!validPassword)
+      res.status(400).json({error: "Invalid email or password"});
+    const token = jwt.sign({id: user.id, role:user.role},
+      process.env.JWT_SECRET, {expiresIn: '4h'},
+    );
+    res.json({token});
 });
 
 // Iniciar el servidor
