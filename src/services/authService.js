@@ -1,8 +1,4 @@
-const {PrismaClient}=require("@prisma/client");
-const {PrismaPg}=require("@prisma/adapter-pg");
-
-const adapter = new PrismaPg({connectionString: process.env.DATABSE_URL});
-const prisma = new PrismaClient({adapter});
+const prisma = require("../db/prisma");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -29,7 +25,7 @@ const loginUser = async (email, password) => {
         throw new Error("Invalid email or password");
     }
     const token = jwt.sign(
-        { id: user.id, role: user.rol },
+        { id: user.id, role: user.role },
         process.env.JWT_SECRET,
         { expiresIn: "4h" },
     );

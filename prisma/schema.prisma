@@ -18,6 +18,29 @@ model User {
   password     String
   role         Role
   appointments Appointment[]
+  enrolments   Enrollment[]
+}
+
+// Caso 8 · Cursos en línea: la matrícula vive en PostgreSQL (pago, sin duplicados).
+// courseId guarda el _id del curso de MongoDB como texto (referencia entre bases, sin FK).
+model Enrollment {
+  id            Int           @id @default(autoincrement())
+  user          User          @relation(fields: [userId], references: [id])
+  userId        Int
+  courseId      String?
+  amount        Decimal       @db.Decimal(10, 2)
+  paymentStatus PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
 }
 
 model Appointment {
